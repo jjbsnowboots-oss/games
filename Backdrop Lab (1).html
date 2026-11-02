@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backdrop Lab</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#e9eef0;--panel:#fff;--ink:#14202b;--mut:#587083;--line:#d5dee3;--acc:#0f766e;--onacc:#fff;--chip:#f0f4f5;--sh:0 10px 30px rgba(20,40,60,.12)}
+@media(prefers-color-scheme:dark){:root{--bg:#0b1217;--panel:#141e26;--ink:#e6eef3;--mut:#8aa0b0;--line:#25333e;--acc:#2dd4bf;--onacc:#06231f;--chip:#1b2832;--sh:0 10px 30px rgba(0,0,0,.4)}}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;gap:14px;align-items:center;padding:18px 24px 4px;max-width:1500px;margin:auto}
+.logo{width:44px;height:40px;flex:none;background:linear-gradient(135deg,var(--acc),#7c3aed);border-radius:58% 42% 55% 45%/48% 58% 42% 52%}
+h1{font:600 25px/1.1 ui-serif,Georgia,serif;margin:0}
+header p{margin:3px 0 0;color:var(--mut);font-size:13.5px}
+main{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:20px;padding:14px 24px 28px;max-width:1500px;margin:auto}
+@media(max-width:900px){main{grid-template-columns:1fr;padding:12px}}
+.frame{display:flex;justify-content:center;align-items:center;background:var(--panel);border-radius:18px;padding:14px;box-shadow:var(--sh)}
+canvas{max-width:100%;max-height:66vh;border-radius:8px;display:block}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
+.sp{flex:1}
+.btn{font:inherit;font-weight:600;padding:10px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.btn:hover{border-color:var(--acc)}
+.pri{background:var(--acc);color:var(--onacc);border-color:var(--acc)}
+.seed{display:flex;align-items:center;gap:8px;color:var(--mut);font-size:13px}
+.seed input,select{font:inherit;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.seed input{width:105px}
+select{width:100%}
+.panel{background:var(--panel);border-radius:18px;padding:4px 18px 8px;box-shadow:var(--sh);align-self:start}
+.grp{padding:14px 0;border-bottom:1px solid var(--line)}
+.grp:last-child{border:0}
+h3{margin:0 0 9px;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:13px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--chip);color:var(--ink);cursor:pointer}
+.chip[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
+.sw{width:12px;height:12px;border-radius:50%;border:1px solid rgba(128,128,128,.5)}
+.sl{display:grid;grid-template-columns:1fr auto;margin-top:12px;font-size:13px}
+.sl output{color:var(--mut)}
+.sl input{grid-column:1/3;width:100%;accent-color:var(--acc);margin:6px 0 0}
+.hint{margin:9px 0 0;font-size:13px;color:var(--mut)}
+.themebar{max-width:1500px;margin:auto;padding:10px 24px 0}
+@media(max-width:900px){.themebar{padding:10px 12px 0}}
+.trow{display:flex;gap:10px}
+#theme{flex:1;min-width:0;font:inherit;font-size:18px;padding:14px 16px;border-radius:14px;border:2px solid var(--line);background:var(--panel);color:var(--ink);box-shadow:var(--sh)}
+#theme:focus{border-color:var(--acc);outline:none}
+.qk{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.chk{display:flex;gap:9px;align-items:center;margin-bottom:12px}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+</style>
+</head>
+<body>
+<header>
+  <i class="logo"></i>
+  <div><h1>Backdrop Lab</h1><p>Type any theme, get a background for your slides, then save it as a picture.</p></div>
+</header>
+<div class="themebar">
+  <div id="tf" class="trow"><input id="theme" placeholder="Type any theme: moldy, maths, technology, pirates, red volcano…" aria-label="Theme" spellcheck="false" autocomplete="off"><button type="button" id="mk" class="btn pri" style="padding:0 24px">Make it</button></div>
+  <div class="qk" id="quick"></div>
+  <div class="qk" id="subj"></div>
+  <div class="qk" id="topics"></div>
+  <p class="hint" id="tmsg">Pick a word or type your own. Spelling doesn’t have to be perfect.</p>
+  <div class="qk" id="dym"></div>
+</div>
+<main>
+  <section>
+    <div class="frame"><canvas id="cv"></canvas></div>
+    <div class="bar">
+      <button class="btn pri" id="gen">Generate new</button>
+      <button class="btn" id="sur">Surprise me</button>
+      <label class="seed">Seed <input id="seed" spellcheck="false" autocomplete="off"></label>
+      <span class="sp"></span>
+      <button class="btn" id="exp">Save PNG</button>
+    </div>
+  </section>
+  <aside class="panel">
+    <div class="grp"><h3>Colour</h3><div class="chips" data-k="mode"></div></div>
+    <div class="grp"><h3>Pattern</h3><div class="chips" data-k="pat"></div>
+      <label class="sl"><span>Pattern strength</span><output></output><input type="range" min="0" max="100" data-s="sci"></label></div>
+    <div class="grp"><h3>Camera lens</h3><div class="chips" data-k="lens"></div><p class="hint" id="hint"></p>
+      <label class="sl"><span>Camera blur</span><output></output><input type="range" min="0" max="100" data-s="blur"></label>
+      <label class="sl"><span>Vignette</span><output></output><input type="range" min="0" max="100" data-s="vig"></label>
+      <label class="sl"><span>Grain</span><output></output><input type="range" min="0" max="100" data-s="grain"></label></div>
+    <div class="grp"><h3>Fine tuning</h3>
+      <label class="sl"><span>Colour shift</span><output></output><input type="range" min="-180" max="180" data-s="shift"></label>
+      <label class="sl"><span>Pattern size</span><output></output><input type="range" min="50" max="200" data-s="psize"></label>
+      <label class="sl"><span>Blob amount</span><output></output><input type="range" min="0" max="8" data-s="bl"></label>
+      <select id="size" aria-label="Picture size" style="margin-top:16px">
+        <option value="1920x1080">1920×1080 (16:9 slide)</option>
+        <option value="1280x720">1280×720 (16:9, smaller)</option>
+        <option value="2560x1440">2560×1440 (16:9, large)</option>
+        <option value="1600x1200">1600×1200 (4:3 slide)</option>
+        <option value="1080x1080">1080×1080 (square)</option>
+      </select></div>
+  </aside>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const S={mode:'dark',pat:'molecules',lens:'macro',sci:35,blur:45,vig:35,grain:30,bl:4,shift:0,psize:100,size:'1920x1080',seed:'',hue:null,light:null,pat2:null,word:''};
+const newSeed=()=>Math.random().toString(36).slice(2,8);
+const PAL={
+ dark:{c:['#0a111c','#14233b','#1b3a5a'],a:'#5eead4',i:'#9fe8ff',d:1},
+ black:{c:['#000000','#0b0b0b','#1a1a1a'],a:'#9a9a9a',i:'#dedede',d:1},
+ light:{c:['#f7f9fc','#e6edfb','#dcf2ec'],a:'#3b82f6',i:'#2b4a6f',d:0},
+ moldy:{c:['#0d160c','#1e3a1c','#3a5a22'],a:'#b6e04a',i:'#d4f08a',d:1},
+ chem:{c:['#150d2b','#34176b','#0f4c75'],a:'#f0abfc',i:'#e9d5ff',d:1},
+ space:{c:['#04050e','#171248','#3b0f5e'],a:'#93c5fd',i:'#dbeafe',d:1},
+ plants:{c:['#0d261b','#14532d','#3f6212'],a:'#bef264',i:'#d9f99d',d:1},
+ ocean:{c:['#03202e','#0a4d6a','#0e7490'],a:'#67e8f9',i:'#cffafe',d:1},
+ neon:{c:['#07040f','#1a0b3a','#0b2a4a'],a:'#22d3ee',i:'#f0abfc',d:1},
+ sunset:{c:['#1f0a1e','#7a1f4a','#c2410c'],a:'#fbbf24',i:'#ffe4c7',d:1},
+ pastel:{c:['#fdf4ff','#e0f2fe','#fce7f3'],a:'#a78bfa',i:'#6d5a9a',d:0},
+ sepia:{c:['#f3e9d6','#e6d3ac','#d5b98a'],a:'#b45309',i:'#5a3a1a',d:0},
+ fire:{c:['#0c0605','#3a0d06','#7a1d06'],a:'#fb923c',i:'#fed7aa',d:1},
+ ice:{c:['#f1f8ff','#d8ecfb','#c4e3f6'],a:'#38bdf8',i:'#1e4f73',d:0},
+ royal:{c:['#120a24','#2b1655','#4a2a7a'],a:'#fbbf24',i:'#fde68a',d:1},
+ war:{c:['#15170f','#2d3022','#4a4d35'],a:'#b3261e',i:'#dcd6b6',d:1},
+ blueprint:{c:['#06223d','#0a3a63','#0f4f86'],a:'#7cc4ff',i:'#d6ecff',d:1},
+ timber:{c:['#1c120a','#3b2414','#5c3a1e'],a:'#d9a066',i:'#f1d9b5',d:1},
+ eco:{c:['#0b2a22','#14503f','#2e7d5b'],a:'#e9c46a',i:'#d8f3dc',d:1},
+ steel:{c:['#0e1114','#1d242b','#2f3a44'],a:'#9fb3c4',i:'#dfe8ef',d:1},
+ maori:{c:['#0c0a0a','#2b0f0f','#5a1414'],a:'#d4452f',i:'#f3ead7',d:1},
+ pounamu:{c:['#071a17','#0f3d33','#1f6b58'],a:'#86e0bd',i:'#d9f7ea',d:1}};
+const O={
+ mode:[['dark','Dark'],['black','Black'],['light','Light'],['random','Random'],['moldy','Moldy'],['chem','Chemistry'],['space','Space'],['plants','Plants'],['ocean','Ocean'],['neon','Neon'],['sunset','Sunset'],['pastel','Pastel'],['sepia','Sepia'],['fire','Fire'],['ice','Ice'],['royal','Royal'],['maori','Māori'],['war','Khaki'],['blueprint','Blueprint'],['timber','Timber'],['steel','Steel'],['eco','Eco green'],['pounamu','Pounamu']],
+ pat:[['molecules','Molecules'],['dna','DNA'],['atoms','Atoms'],['circuits','Circuits'],['graph','Graph paper'],['cells','Cells'],['math','Maths'],['network','Network'],['binary','Binary code'],['koru','Koru'],['poutama','Poutama'],['gears','Gears'],['stars','Stars'],['waves','Waves'],['leaves','Leaves'],['notes','Music'],['shapes','Shapes'],['confetti','Confetti'],['trail','Trail'],['contours','Contours'],['searchlights','Searchlights'],['rays','Sunrise rays'],['aperture','Camera'],['compass','Compass'],['poppies','Poppies'],['pages','Pages'],['invent','Word art'],['mixed','Mixed'],['none','None']],
+ lens:[['none','None'],['wide','Wide'],['macro','Macro'],['micro','Microscope'],['portrait','Portrait']]};
+const SW={dark:'#1b3a5a',black:'#000',light:'#e6edfb',random:'conic-gradient(#f43f5e,#f59e0b,#10b981,#3b82f6,#a855f7,#f43f5e)',moldy:'#3a5a22',chem:'#34176b',space:'#3b0f5e',plants:'#14532d',ocean:'#0e7490',neon:'linear-gradient(135deg,#22d3ee,#a855f7)',sunset:'linear-gradient(135deg,#7a1f4a,#fbbf24)',pastel:'#e0c3fc',sepia:'#d5b98a',fire:'#c2410c',ice:'#c4e3f6',royal:'#4a2a7a',maori:'linear-gradient(135deg,#0c0a0a 45%,#d4452f)',war:'#4a4d35',blueprint:'#0f4f86',timber:'#5c3a1e',steel:'#2f3a44',eco:'#2e7d5b',pounamu:'#1f6b58'};
+const H={none:'Flat and graphic, with no camera effects.',wide:'Crisp all over, with soft light from above.',macro:'Close-up look: sharp in the middle, soft towards the edges.',micro:'Round microscope view with a dark rim.',portrait:'Whole background softly blurred, with glowing bokeh circles.'};
+
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function rngOf(seed){let a=hash(seed);return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hx(h,s,l){h=((h%360)+360)%360;s/=100;l/=100;const k=n=>(n+h/30)%12,a=s*Math.min(l,1-l),f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));return'#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join('')}
+const al=(c,a)=>c+Math.round(a*255).toString(16).padStart(2,'0');
+const mk=(w,h)=>{const e=document.createElement('canvas');e.width=w;e.height=h;return e};
+const dot=(a,x,y,r)=>{a.beginPath();a.arc(x,y,r,0,6.283);a.fill()};
+
+function h2s(c){const r=parseInt(c.slice(1,3),16)/255,g=parseInt(c.slice(3,5),16)/255,b=parseInt(c.slice(5,7),16)/255,M=Math.max(r,g,b),m=Math.min(r,g,b),l=(M+m)/2,d=M-m;let h=0,s=0;if(d){s=d/(1-Math.abs(2*l-1));h=(M===r?((g-b)/d+6)%6:M===g?(b-r)/d+2:(r-g)/d+4)*60}return[h,s*100,l*100]}
+function shiftP(P,k){const f=c=>{const[h,s,l]=h2s(c);return hx(h+k,s,l)};return{c:P.c.map(f),a:f(P.a),i:f(P.i),d:P.d}}
+function pal(rng){const P=pal0(rng);return S.shift?shiftP(P,S.shift):P}
+function pal0(rng){
+ if(S.mode!=='random')return PAL[S.mode];
+ const r0=rng(),h=S.hue==null?r0*360:S.hue,h2=h+40+rng()*60,dk0=rng()<.7,dk=S.light==null?dk0:!S.light;
+ return dk?{c:[hx(h,45,10),hx(h2,50,20),hx(h,55,30)],a:hx(h+170,80,65),i:hx(h,90,85),d:1}
+  :{c:[hx(h,40,97),hx(h2,60,92),hx(h,60,88)],a:hx(h,70,50),i:hx(h,50,25),d:0};
+}
+function base(a,W,H,rng,P){
+ a.fillStyle=P.c[0];a.fillRect(0,0,W,H);
+ for(let i=0;i<6;i++){
+  const x=rng()*W,y=rng()*H,r=W*(.3+rng()*.35),acc=i%3==2,col=acc?P.a:P.c[1+i%2],g=a.createRadialGradient(x,y,0,x,y,r);
+  g.addColorStop(0,al(col,acc?.28:.9));g.addColorStop(1,al(col,0));a.fillStyle=g;a.fillRect(0,0,W,H);
+ }
+}
+function blobs(a,W,H,rng,P){
+ const n=S.bl;
+ for(let i=0;i<n;i++){
+  const cx=rng()*W,cy=rng()*H,r=W*(.08+rng()*.14),k=7+(rng()*4|0),p=[];
+  for(let j=0;j<k;j++){const t=j/k*6.2832,q=r*(.7+rng()*.55);p.push([cx+Math.cos(t)*q,cy+Math.sin(t)*q])}
+  const m=(u,v)=>[(u[0]+v[0])/2,(u[1]+v[1])/2],s=m(p[k-1],p[0]);
+  a.beginPath();a.moveTo(s[0],s[1]);
+  for(let j=0;j<k;j++){const e=m(p[j],p[(j+1)%k]);a.quadraticCurveTo(p[j][0],p[j][1],e[0],e[1])}
+  const g=a.createLinearGradient(cx-r,cy-r,cx+r,cy+r);g.addColorStop(0,al(P.a,.34));g.addColorStop(1,al(P.c[2],.2));
+  a.fillStyle=g;a.fill();
+ }
+}
+function mold(a,W,H,rng,P,u){
+ const n=4+Math.round(S.sci/100*12);
+ for(let i=0;i<n;i++){
+  const x=rng()*W,y=rng()*H,r=(40+rng()*120)*u,g=a.createRadialGradient(x,y,0,x,y,r);
+  g.addColorStop(0,al(P.a,.3));g.addColorStop(.7,al(P.a,.1));g.addColorStop(1,al(P.a,0));
+  a.fillStyle=g;dot(a,x,y,r);
+  for(let j=0;j<30;j++){const t=rng()*6.283,d=r*Math.sqrt(rng())*.9;a.fillStyle=al(P.i,.12+rng()*.3);dot(a,x+Math.cos(t)*d,y+Math.sin(t)*d,(1.5+rng()*4)*u)}
+ }
+}
+function molecules(a,W,H,rng,u,n,P,al0){
+ for(let m=0;m<n;m++){
+  const nd=[[rng()*W,rng()*H,null]],k=4+(rng()*5|0);
+  for(let i=1;i<k;i++){const p=nd[rng()*nd.length|0],t=rng()*6.283,d=(70+rng()*60)*u;nd.push([p[0]+Math.cos(t)*d,p[1]+Math.sin(t)*d,p])}
+  a.beginPath();nd.forEach(q=>{if(q[2]){a.moveTo(q[2][0],q[2][1]);a.lineTo(q[0],q[1])}});a.stroke();
+  nd.forEach(q=>dot(a,q[0],q[1],(7+rng()*12)*u));
+  if(rng()<.5){const x=rng()*W,y=rng()*H,r=(50+rng()*40)*u;a.beginPath();for(let i=0;i<6;i++){const t=i*1.0472+.5236;a.lineTo(x+Math.cos(t)*r,y+Math.sin(t)*r)}a.closePath();a.stroke()}
+ }
+}
+function dna(a,W,H,rng,u,n){
+ for(let m=0;m<n;m++){
+  const len=W*(.3+rng()*.35),A=42*u,wl=(130+rng()*70)*u;
+  a.save();a.translate(rng()*W,rng()*H);a.rotate(rng()*3.14);
+  for(let s=0;s<2;s++){a.beginPath();for(let x=0;x<=len;x+=5*u){const y=Math.sin(x/wl*6.283+s*3.1416)*A;x?a.lineTo(x,y):a.moveTo(x,y)}a.stroke()}
+  for(let x=0;x<=len;x+=wl/8){const y=Math.sin(x/wl*6.283)*A;a.beginPath();a.moveTo(x,y);a.lineTo(x,-y);a.stroke();dot(a,x,y,3*u);dot(a,x,-y,3*u)}
+  a.restore();
+ }
+}
+function atoms(a,W,H,rng,u,n){
+ for(let m=0;m<n;m++){
+  const x=rng()*W,y=rng()*H,R=(60+rng()*80)*u,rot=rng()*3.14;
+  for(let k=0;k<3;k++){
+   const th=rot+k*1.0472;a.beginPath();a.ellipse(x,y,R,R*.34,th,0,6.283);a.stroke();
+   const t=rng()*6.283,ex=R*Math.cos(t),ey=R*.34*Math.sin(t);
+   dot(a,x+ex*Math.cos(th)-ey*Math.sin(th),y+ex*Math.sin(th)+ey*Math.cos(th),5*u);
+  }
+  dot(a,x,y,9*u);
+ }
+}
+function circuits(a,W,H,rng,u,n){
+ for(let m=0;m<n*3;m++){
+  let x=rng()*W,y=rng()*H,d=rng()*4|0;const s=[[x,y]];
+  for(let i=0,k=3+(rng()*4|0);i<k;i++){const l=(50+rng()*160)*u;x+=[1,0,-1,0][d]*l;y+=[0,1,0,-1][d]*l;s.push([x,y]);d=(d+(rng()<.5?1:3))%4}
+  a.beginPath();s.forEach((p,i)=>i?a.lineTo(p[0],p[1]):a.moveTo(p[0],p[1]));a.stroke();
+  [s[0],s[s.length-1]].forEach(p=>{a.beginPath();a.arc(p[0],p[1],6*u,0,6.283);a.stroke();dot(a,p[0],p[1],2.2*u)});
+ }
+}
+function graph(a,W,H,rng,u,n,P,al0){
+ const s=48*u;a.globalAlpha=al0*.45;a.lineWidth=Math.max(.6,u);a.beginPath();
+ for(let x=0;x<W;x+=s){a.moveTo(x,0);a.lineTo(x,H)}
+ for(let y=0;y<H;y+=s){a.moveTo(0,y);a.lineTo(W,y)}
+ a.stroke();a.lineWidth=Math.max(1,2.2*u);a.globalAlpha=al0;
+ for(let m=0;m<Math.ceil(n/2);m++){
+  const w=(300+rng()*300)*u,h=(180+rng()*150)*u,x=rng()*(W-w),y=rng()*(H-h),k=8,pts=[];let py=.8;
+  a.beginPath();a.moveTo(x,y);a.lineTo(x,y+h);a.lineTo(x+w,y+h);a.stroke();
+  for(let i=0;i<=k;i++){py=Math.max(.05,Math.min(.95,py-.08-(rng()-.45)*.15));pts.push([x+i/k*w,y+py*h])}
+  a.beginPath();pts.forEach((p,i)=>i?a.lineTo(p[0],p[1]):a.moveTo(p[0],p[1]));a.stroke();
+  pts.forEach(p=>dot(a,p[0],p[1],4*u));
+  for(let i=1;i<k;i++){a.beginPath();a.moveTo(x+i/k*w,y+h);a.lineTo(x+i/k*w,y+h+8*u);a.stroke()}
+ }
+}
+function cells(a,W,H,rng,u,n,P,al0){
+ for(let m=0;m<n*3;m++){
+  const x=rng()*W,y=rng()*H,r=(30+rng()*80)*u;
+  a.beginPath();a.arc(x,y,r,0,6.283);a.stroke();
+  a.beginPath();a.arc(x+(rng()-.5)*r*.4,y+(rng()-.5)*r*.4,r*.32,0,6.283);a.globalAlpha=al0*.5;a.fill();a.globalAlpha=al0;a.stroke();
+  for(let i=0;i<4;i++){const t=rng()*6.283,d=r*(.5+rng()*.35);dot(a,x+Math.cos(t)*d,y+Math.sin(t)*d,r*.07)}
+ }
+}
+function math(a,W,H,rng,u,n){
+ const sy=['π','Σ','√','∫','x²','a²+b²=c²','∞','Δ','θ','2+2=4','sin x','%','÷','×','±','f(x)'];
+ a.textAlign='center';
+ for(let i=0;i<n*5;i++){a.font=(24+rng()*46)*u+'px Georgia,serif';a.fillText(sy[rng()*sy.length|0],rng()*W,rng()*H)}
+ for(let m=0;m<Math.ceil(n/2);m++){const y0=rng()*H,A=(30+rng()*70)*u,wl=(200+rng()*300)*u,ph=rng()*6;a.beginPath();for(let x=0;x<=W;x+=6*u){const y=y0+Math.sin(x/wl*6.283+ph)*A;x?a.lineTo(x,y):a.moveTo(x,y)}a.stroke()}
+ for(let m=0;m<n;m++){const x=rng()*W,y=rng()*H,s=(40+rng()*80)*u;a.beginPath();a.moveTo(x,y);a.lineTo(x+s*1.4,y);a.lineTo(x,y-s);a.closePath();a.stroke()}
+}
+function network(a,W,H,rng,u,n){
+ const k=10+n*5,p=[];for(let i=0;i<k;i++)p.push([rng()*W,rng()*H]);
+ a.beginPath();p.forEach((q,i)=>p.forEach((r,j)=>{if(j>i&&Math.hypot(q[0]-r[0],q[1]-r[1])<W*.2){a.moveTo(q[0],q[1]);a.lineTo(r[0],r[1])}}));a.stroke();
+ p.forEach(q=>dot(a,q[0],q[1],(3+rng()*5)*u));
+ a.textAlign='left';a.font=16*u+'px monospace';
+ for(let i=0;i<n*3;i++){let s='';for(let j=0,l=8+rng()*8;j<l;j++)s+=rng()<.5?0:1;a.fillText(s,rng()*W,rng()*H)}
+}
+function waves(a,W,H,rng,u,n){
+ const k=n*2+2;
+ for(let m=0;m<k;m++){const y0=H*(.1+.85*m/k)+(rng()-.5)*60*u,A=(15+rng()*45)*u,wl=(250+rng()*400)*u,ph=rng()*6;a.beginPath();for(let x=0;x<=W;x+=6*u){const y=y0+Math.sin(x/wl*6.283+ph)*A+Math.sin(x/wl*13+ph*2)*A*.3;x?a.lineTo(x,y):a.moveTo(x,y)}a.stroke()}
+}
+function stars(a,W,H,rng,u,n){
+ for(let i=0;i<60+n*40;i++)dot(a,rng()*W,rng()*H,(.8+rng()*2.6)*u);
+ a.lineWidth=Math.max(.8,u);
+ for(let m=0;m<n;m++){const k=4+(rng()*3|0);let x=rng()*W,y=rng()*H;const s=[[x,y]];for(let i=1;i<k;i++){x+=(rng()-.3)*140*u;y+=(rng()-.5)*120*u;s.push([x,y])}
+  a.beginPath();s.forEach((p,i)=>i?a.lineTo(p[0],p[1]):a.moveTo(p[0],p[1]));a.stroke();s.forEach(p=>dot(a,p[0],p[1],4*u))}
+}
+function leaves(a,W,H,rng,u,n){
+ for(let m=0;m<n*3;m++){
+  const L=(50+rng()*100)*u;a.save();a.translate(rng()*W,rng()*H);a.rotate(rng()*6.283);
+  a.beginPath();a.moveTo(0,0);a.quadraticCurveTo(L*.5,-L*.4,L,0);a.quadraticCurveTo(L*.5,L*.4,0,0);a.stroke();
+  a.beginPath();a.moveTo(0,0);a.lineTo(L,0);
+  for(let i=1;i<5;i++){const t=L*i/5,v=L*.12*(1-i/6);a.moveTo(t,0);a.lineTo(t+L*.1,-v);a.moveTo(t,0);a.lineTo(t+L*.1,v)}
+  a.stroke();a.restore();
+ }
+}
+function shapes(a,W,H,rng,u,n,P,al0){
+ for(let m=0;m<n*3;m++){
+  const s=(30+rng()*90)*u,k=[3,4,6,0][rng()*4|0];a.save();a.translate(rng()*W,rng()*H);a.rotate(rng()*3);a.beginPath();
+  if(k){for(let i=0;i<k;i++){const q=i/k*6.283;a.lineTo(Math.cos(q)*s,Math.sin(q)*s)}a.closePath()}else a.arc(0,0,s,0,6.283);
+  if(m%3==0){a.globalAlpha=al0*.5;a.fill();a.globalAlpha=al0}
+  a.stroke();a.restore();
+ }
+}
+function notes(a,W,H,rng,u,n){
+ for(let m=0;m<Math.ceil(n/2)+1;m++){
+  const y=rng()*H*.8,g=12*u,x0=rng()*W*.3,x1=W-rng()*W*.3;
+  a.lineWidth=Math.max(.8,u);a.beginPath();for(let i=0;i<5;i++){a.moveTo(x0,y+i*g);a.lineTo(x1,y+i*g)}a.stroke();a.lineWidth=Math.max(1,2*u);
+  for(let x=x0+30*u;x<x1-20*u;x+=(40+rng()*60)*u){const ny=y+((rng()*9|0)-2)*g/2;a.beginPath();a.ellipse(x,ny,7*u,5*u,-.4,0,6.283);a.fill();a.beginPath();a.moveTo(x+6*u,ny);a.lineTo(x+6*u,ny-38*u);a.stroke()}
+ }
+}
+function gears(a,W,H,rng,u,n){
+ for(let m=0;m<n;m++){
+  const x=rng()*W,y=rng()*H,R=(40+rng()*70)*u,k=8+(rng()*8|0),st=6.283/k;
+  a.beginPath();for(let i=0;i<k;i++){const t=i*st;[[0,.85],[.15,1],[.45,1],[.6,.85]].forEach(([d,r])=>a.lineTo(x+Math.cos(t+d*st)*R*r,y+Math.sin(t+d*st)*R*r))}
+  a.closePath();a.stroke();a.beginPath();a.arc(x,y,R*.4,0,6.283);a.stroke();dot(a,x,y,R*.1);
+ }
+}
+function confetti(a,W,H,rng,u,n){
+ for(let i=0;i<40+n*30;i++){
+  const x=rng()*W,y=rng()*H,r=(3+rng()*10)*u,t=rng()*3|0;
+  if(t==0)dot(a,x,y,r);else if(t==1){a.beginPath();a.arc(x,y,r,0,6.283);a.stroke()}
+  else{a.save();a.translate(x,y);a.rotate(rng()*3);a.fillRect(-r,-r/2,r*2,r);a.restore()}
+ }
+}
+function binary(a,W,H,rng,u,n,P,al0){
+ a.textAlign='left';const fs=(32+rng()*14)*u,cols=8+n*4;a.font='bold '+fs+'px monospace';
+ for(let c=0;c<cols;c++){
+  const x=rng()*W,y0=rng()*H,len=5+(rng()*14|0);
+  for(let r=0;r<len;r++){a.globalAlpha=Math.min(.95,al0*1.9*(1-r/len)*(.5+rng()*.5));a.fillText(rng()<.5?'0':'1',x,y0+r*fs*1.15)}
+ }
+ a.globalAlpha=al0;a.font=fs*1.6+'px monospace';
+ const sy=['{ }','</>','01','( )','[ ]',';','&&','=>','#','//'];
+ for(let i=0;i<n*2;i++)a.fillText(sy[rng()*sy.length|0],rng()*W,rng()*H);
+}
+function koru(a,W,H,rng,u,n){
+ for(let m=0;m<n*2;m++){
+  const R=(35+rng()*60)*u;
+  a.save();a.translate(rng()*W,rng()*H);a.rotate(rng()*6.283);a.scale(rng()<.5?1:-1,1);a.lineWidth=Math.max(2,5*u);
+  a.beginPath();for(let t=0;t<=12;t+=.15){const r=R*(1-t/14);a.lineTo(Math.cos(t)*r,Math.sin(t)*r)}a.stroke();
+  a.beginPath();a.moveTo(R,0);a.bezierCurveTo(R*1.6,R*.9,R*2.3,R*.8,R*2.6,R*1.9);a.stroke();
+  dot(a,Math.cos(12)*R*(1-12/14),Math.sin(12)*R*(1-12/14),R*.13);
+  a.restore();
+ }
+}
+function poutama(a,W,H,rng,u,n){
+ for(let m=0;m<Math.ceil(n/2)+1;m++){
+  const s=(18+rng()*14)*u,st=4+(rng()*4|0),d=rng()<.5?1:-1,reps=Math.max(1,Math.floor(W*(.4+rng()*.5)/(2*st*s)));
+  let x=d>0?rng()*W*.3:W-rng()*W*.3,y=rng()*H*.8+s*st;
+  a.lineWidth=Math.max(1.5,3*u);a.beginPath();a.moveTo(x,y);
+  for(let r=0;r<reps;r++){
+   for(let i=0;i<st;i++){x+=s*d;a.lineTo(x,y);y-=s;a.lineTo(x,y)}
+   for(let i=0;i<st;i++){x+=s*d;a.lineTo(x,y);y+=s;a.lineTo(x,y)}
+  }
+  a.stroke();
+ }
+}
+function invent(a,W,H,rng,u,n,P,al0){
+ const wd=(S.word||'x').toLowerCase(),h=hash(wd),gcd=(x,y)=>y?gcd(y,x%y):x;
+ const R=6+h%6,r=2+(h>>3)%4,d0=1+(h>>6)%6,turns=r/gcd(R,r),figs=1+Math.ceil(n/2);
+ a.lineWidth=Math.max(1,1.6*u);
+ for(let m=0;m<figs;m++){
+  const L=(70+rng()*150)*u,k0=L/(R-r+d0),ex=m%2?.6:1;
+  a.save();a.translate(rng()*W,rng()*H);a.rotate(rng()*6.283);
+  for(let k=0;k<3;k++){
+   const d=d0+k*.7,N=Math.min(900,240*turns);a.beginPath();
+   for(let i=0;i<=N;i++){const t=i/N*6.2832*turns,x=((R-r)*Math.cos(t)+d*Math.cos((R-r)/r*t))*k0*ex,y=((R-r)*Math.sin(t)-d*Math.sin((R-r)/r*t))*k0*ex;i?a.lineTo(x,y):a.moveTo(x,y)}
+   a.stroke();
+  }
+  a.restore();
+ }
+ const L=wd.replace(/[^a-z]/g,'');
+ if(L){
+  a.textAlign='center';
+  for(let i=0;i<Math.min(24,6+n*3);i++){a.font='bold '+(26+rng()*70)*u+'px Georgia,serif';a.save();a.translate(rng()*W,rng()*H);a.rotate((rng()-.5)*1.2);a.globalAlpha=al0*.7;a.fillText(L[i%L.length].toUpperCase(),0,0);a.restore()}
+  a.globalAlpha=al0;
+ }
+}
+function contours(a,W,H,rng,u,n,P,al0){
+ a.lineWidth=Math.max(1.2,2.2*u);a.globalAlpha=Math.min(.9,al0*1.5);
+ for(let m=0;m<n+1;m++){
+  const cx=rng()*W,cy=rng()*H,ph=[rng()*6,rng()*6,rng()*6],R=(25+rng()*20)*u,rings=6+(rng()*6|0);
+  for(let k=1;k<=rings;k++){
+   a.beginPath();
+   for(let i=0;i<=72;i++){const t=i/72*6.2832,r=k*R*(1+.18*Math.sin(2*t+ph[0]+k*.2)+.1*Math.sin(3*t+ph[1])+.06*Math.sin(5*t+ph[2])),x=cx+Math.cos(t)*r*1.3,y=cy+Math.sin(t)*r;i?a.lineTo(x,y):a.moveTo(x,y)}
+   a.closePath();a.stroke();
+  }
+ }
+ a.globalAlpha=al0;
+}
+function aperture(a,W,H,rng,u,n){
+ for(let m=0;m<n;m++){
+  const x=rng()*W,y=rng()*H,R=(50+rng()*90)*u,k=6+(rng()*3|0),rot=rng()*3;
+  a.beginPath();a.arc(x,y,R,0,6.283);a.stroke();a.beginPath();a.arc(x,y,R*.62,0,6.283);a.stroke();
+  a.beginPath();for(let i=0;i<k;i++){const t=rot+i/k*6.283,t2=t+6.283/k*.9;a.moveTo(x+Math.cos(t)*R,y+Math.sin(t)*R);a.lineTo(x+Math.cos(t2)*R*.4,y+Math.sin(t2)*R*.4)}a.stroke();
+ }
+ const fx=W*(.2+rng()*.4),fy=H*(.2+rng()*.4),fw=W*.28,fh=H*.3,b=26*u;
+ a.lineWidth=Math.max(1.5,3*u);a.beginPath();
+ [[fx,fy,1,1],[fx+fw,fy,-1,1],[fx,fy+fh,1,-1],[fx+fw,fy+fh,-1,-1]].forEach(([x,y,dx,dy])=>{a.moveTo(x+dx*b,y);a.lineTo(x,y);a.lineTo(x,y+dy*b)});
+ a.moveTo(fx+fw/2-b/2,fy+fh/2);a.lineTo(fx+fw/2+b/2,fy+fh/2);a.moveTo(fx+fw/2,fy+fh/2-b/2);a.lineTo(fx+fw/2,fy+fh/2+b/2);a.stroke();
+ a.textAlign='left';a.font=(18*u)+'px monospace';a.fillText('f/2.8   1/250   ISO 100',fx,fy+fh+36*u);
+}
+function compass(a,W,H,rng,u,n,P,al0){
+ for(let m=0;m<n;m++){
+  const R=(50+rng()*70)*u;a.save();a.translate(rng()*W,rng()*H);a.rotate((rng()-.5)*.6);
+  a.beginPath();a.arc(0,0,R,0,6.283);a.stroke();a.beginPath();a.arc(0,0,R*.72,0,6.283);a.stroke();
+  a.beginPath();for(let i=0;i<8;i++){const t=i*.7854-1.5708,r=i%2?R*.6:R*1.15;a.lineTo(Math.cos(t)*r,Math.sin(t)*r);const t2=t+.3927;a.lineTo(Math.cos(t2)*R*.2,Math.sin(t2)*R*.2)}a.closePath();a.stroke();
+  a.textAlign='center';a.font='bold '+R*.3+'px Georgia,serif';a.fillText('N',0,-R*1.28);a.restore();
+ }
+ a.lineWidth=Math.max(.8,u);a.globalAlpha=al0*.6;
+ for(let i=0;i<n+2;i++){a.beginPath();a.ellipse(rng()*W,rng()*H,(150+rng()*300)*u,(60+rng()*140)*u,rng()*3,0,6.283);a.stroke()}
+ a.globalAlpha=al0;
+}
+function poppies(a,W,H,rng,u,n,P,al0){
+ for(let m=0;m<n*2+4;m++){
+  const R=(26+rng()*36)*u;a.save();a.translate(rng()*W,rng()*H);a.rotate(rng()*6.283);
+  a.beginPath();a.moveTo(0,R*.5);a.quadraticCurveTo(R*.6,R*2,R*.3,R*4);a.stroke();
+  a.fillStyle='#c4302b';a.globalAlpha=Math.min(.95,al0*1.6);
+  for(let i=0;i<4;i++){const t=i*1.5708+.4;a.beginPath();a.arc(Math.cos(t)*R*.55,Math.sin(t)*R*.55,R*.7,0,6.283);a.fill()}
+  a.fillStyle='#000';dot(a,0,0,R*.28);a.restore();
+ }
+}
+function pages(a,W,H,rng,u,n){
+ a.lineWidth=Math.max(1,2*u);
+ for(let m=0;m<n+1;m++){
+  const x=rng()*W*.8,y=rng()*H*.7,w=(160+rng()*160)*u,lines=6+(rng()*8|0);
+  for(let i=0;i<lines;i++){const ww=w*(i===lines-1?.5:.75+rng()*.25);a.beginPath();a.moveTo(x,y+i*11*u);a.lineTo(x+ww,y+i*11*u);a.stroke()}
+ }
+ a.textAlign='center';a.font='italic '+(130*u)+'px Georgia,serif';
+ for(let i=0;i<2;i++)a.fillText('“',rng()*W,rng()*H*.6+100*u);
+}
+function searchlights(a,W,H,rng,u,n,P,al0){
+ for(let i=0;i<n+2;i++){
+  const x0=rng()*W,th=-Math.PI/2+(rng()-.5)*.9,L=H*1.3,x1=x0+Math.cos(th)*L,y1=H+Math.sin(th)*L,w0=6*u,w1=(40+rng()*40)*u;
+  const g=a.createLinearGradient(x0,H,x1,y1);g.addColorStop(0,al(P.i,Math.min(.9,al0*2.4)));g.addColorStop(1,al(P.i,0));
+  a.fillStyle=g;a.beginPath();a.moveTo(x0-w0,H);a.lineTo(x0+w0,H);a.lineTo(x1+w1,y1);a.lineTo(x1-w1,y1);a.closePath();a.fill();
+ }
+ a.fillStyle=P.i;a.lineWidth=Math.max(1.5,3*u);
+ for(let i=0;i<n+2;i++){
+  const s=(30+rng()*24)*u;a.save();a.translate(rng()*W,rng()*H*.65);a.scale(rng()<.5?1:-1,1);
+  a.beginPath();a.moveTo(-s*1.6,0);a.lineTo(s*1.6,0);a.stroke();
+  a.beginPath();a.moveTo(-s*.2,0);a.lineTo(-s*.8,-s);a.lineTo(s*.2,0);a.lineTo(-s*.8,s);a.closePath();a.fill();
+  a.beginPath();a.moveTo(-s*1.5,0);a.lineTo(-s*1.9,-s*.5);a.lineTo(-s*1.3,0);a.closePath();a.fill();a.restore();
+ }
+}
+function rays(a,W,H,rng,u,n,P,al0){
+ const cx=W*(.3+rng()*.4),cy=H*(.6+rng()*.12),R=(70+rng()*40)*u,k=28+n*4;
+ a.lineWidth=Math.max(1.5,2.5*u);a.beginPath();
+ for(let i=0;i<k;i++){const t=Math.PI+i/(k-1)*Math.PI,r0=R*1.25,r1=R*(2.2+(i%2)*1.8+rng()*.6);a.moveTo(cx+Math.cos(t)*r0,cy+Math.sin(t)*r0);a.lineTo(cx+Math.cos(t)*r1,cy+Math.sin(t)*r1)}
+ a.stroke();a.beginPath();a.arc(cx,cy,R,Math.PI,0);a.stroke();a.globalAlpha=al0*.5;a.fill();a.globalAlpha=1;
+ for(let h=0;h<3;h++){
+  const wl=(260+rng()*240)*u,ph=rng()*6,A=(14+rng()*16)*u,y0=cy+(.04+h*.12)*H;
+  a.fillStyle=al(P.c[0],.55);a.beginPath();a.moveTo(0,H);
+  for(let x=0;x<=W;x+=8*u)a.lineTo(x,y0+Math.sin(x/wl*6.283+ph)*A);
+  a.lineTo(W,H);a.closePath();a.fill();
+ }
+ a.fillStyle=P.i;a.globalAlpha=al0;
+}
+function trail(a,W,H,rng,u,n){
+ for(let m=0;m<Math.ceil(n/2)+1;m++){
+  const pts=[],k=6+(rng()*4|0);let x=-20*u,y=rng()*H;
+  for(let i=0;i<=k;i++){pts.push([x,y]);x+=W/k*(.8+rng()*.4);y=Math.max(30*u,Math.min(H-20*u,y+(rng()-.5)*H*.5))}
+  a.setLineDash([10*u,12*u]);a.lineWidth=Math.max(1.5,3*u);a.beginPath();a.moveTo(pts[0][0],pts[0][1]);
+  for(let i=1;i<pts.length-1;i++)a.quadraticCurveTo(pts[i][0],pts[i][1],(pts[i][0]+pts[i+1][0])/2,(pts[i][1]+pts[i+1][1])/2);
+  a.stroke();a.setLineDash([]);
+  for(let i=1;i<pts.length-1;i+=2){const px=pts[i][0],py=pts[i][1];a.beginPath();a.arc(px,py-28*u,14*u,0,6.283);a.stroke();dot(a,px,py-28*u,5*u);a.beginPath();a.moveTo(px-10*u,py-19*u);a.lineTo(px,py);a.lineTo(px+10*u,py-19*u);a.stroke()}
+ }
+ for(let i=0;i<n*4;i++){const x=rng()*W,y=rng()*H,s=(16+rng()*24)*u;a.beginPath();a.moveTo(x,y-s*1.6);a.lineTo(x-s,y);a.lineTo(x+s,y);a.closePath();a.stroke();a.beginPath();a.moveTo(x,y);a.lineTo(x,y+s*.6);a.stroke()}
+}
+const F={invent,trail,searchlights,rays,contours,aperture,compass,poppies,pages,molecules,dna,atoms,circuits,graph,cells,math,network,binary,koru,poutama,waves,stars,leaves,shapes,notes,gears,confetti};
+function pattern(a,W,H,rng,P,u){
+ if(!S.sci||S.pat==='none')return;
+ const al0=.05+S.sci/100*.5,n=1+Math.round(S.sci/100*6);
+ a.save();a.strokeStyle=P.i;a.fillStyle=P.i;a.lineWidth=Math.max(1,2*u);a.lineCap='round';a.lineJoin='round';
+ const go=(f,k)=>{a.globalAlpha=al0;f(a,W,H,rng,u,k,P,al0);a.globalAlpha=al0};
+ if(S.pat==='mixed')['molecules','dna','atoms','circuits','cells'].forEach(k=>go(F[k],Math.ceil(n/2)));
+ else{go(F[S.pat],n);if(S.pat2)go(F[S.pat2],Math.ceil(n/2))}
+ a.restore();
+}
+function focus(c,A,W,H,px,r0,r1){
+ if(px>.4&&'filter' in c){c.save();c.filter='blur('+px+'px)';const p=px*3;c.drawImage(A,-p,-p,W+2*p,H+2*p);c.restore()}
+ const B=mk(W,H),b=B.getContext('2d');b.drawImage(A,0,0);b.globalCompositeOperation='destination-in';
+ const g=b.createRadialGradient(W/2,H/2,H*r0,W/2,H/2,H*r1);g.addColorStop(0,'#000');g.addColorStop(1,'rgba(0,0,0,0)');
+ b.fillStyle=g;b.fillRect(0,0,W,H);c.drawImage(B,0,0);
+}
+function render(cv,W,H){
+ cv.width=W;cv.height=H;
+ const rng=rngOf(S.seed||'a'),P=pal(rng),u=W/1920,A=mk(W,H),a=A.getContext('2d');
+ base(a,W,H,rng,P);
+ if(S.bl)blobs(a,W,H,rngOf(S.seed+'b'),P);
+ if(S.mode==='moldy')mold(a,W,H,rng,P,u);
+ pattern(a,W,H,rng,P,u*S.psize/100);
+ const c=cv.getContext('2d'),b=S.blur/100,L=S.lens;
+ c.drawImage(A,0,0);
+ if(L==='macro')focus(c,A,W,H,b*30*u,.15,.8);
+ else if(L==='micro')focus(c,A,W,H,b*10*u,.22,.46);
+ else if(L==='portrait'){
+  if('filter' in c){c.save();c.filter='blur('+(4+b*24)*u+'px)';const p=60*u;c.drawImage(A,-p,-p,W+2*p,H+2*p);c.restore()}
+  c.save();c.globalCompositeOperation=P.d?'lighter':'source-over';
+  const n=12+Math.round(b*14);
+  for(let i=0;i<n;i++){
+   const x=rng()*W,y=rng()*H,r=(25+rng()*90)*u,col=[P.a,P.i,P.c[2]][i%3],g=c.createRadialGradient(x,y,0,x,y,r);
+   g.addColorStop(0,al(col,.06));g.addColorStop(.8,al(col,.2));g.addColorStop(.95,al(col,.4));g.addColorStop(1,al(col,0));
+   c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,6.283);c.fill();
+  }
+  c.restore();
+ }else if(L==='wide'){
+  const g=c.createLinearGradient(0,0,0,H*.6);g.addColorStop(0,'rgba(255,255,255,.08)');g.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=g;c.fillRect(0,0,W,H);
+ }
+ if(L==='micro'){
+  const R=H*.47,g=c.createRadialGradient(W/2,H/2,R*.9,W/2,H/2,R);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,1)');c.fillStyle=g;c.fillRect(0,0,W,H);
+  c.strokeStyle='rgba(255,255,255,.16)';c.lineWidth=4*u;c.beginPath();c.arc(W/2,H/2,R,0,6.283);c.stroke();
+ }
+ if(L!=='none'&&S.vig){
+  const v=S.vig/100,g=c.createRadialGradient(W/2,H/2,H*.3,W/2,H/2,Math.hypot(W,H)/2);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,P.d?'rgba(0,0,0,'+v*.75+')':'rgba(30,45,70,'+v*.5+')');
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+ }
+ if(S.grain){
+  const t=mk(256,256),tc=t.getContext('2d'),im=tc.createImageData(256,256);
+  for(let i=0;i<im.data.length;i+=4){const v=rng()*255;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=255}
+  tc.putImageData(im,0,0);
+  c.save();const s=W/960;c.scale(s,s);c.globalCompositeOperation='overlay';c.globalAlpha=S.grain/100*.55;
+  c.fillStyle=c.createPattern(t,'repeat');c.fillRect(0,0,W/s,H/s);c.restore();
+ }
+}
+const cv=$('#cv');
+function draw(){const[w,h]=S.size.split('x').map(Number);render(cv,960,Math.round(960*h/w))}
+let pend=0;
+function go(){if(!pend){pend=1;requestAnimationFrame(()=>{pend=0;draw()})}}
+function sync(){
+ document.querySelectorAll('.chips').forEach(el=>el.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===S[el.dataset.k])));
+ document.querySelectorAll('input[data-s]').forEach(i=>{i.value=S[i.dataset.s];i.previousElementSibling.textContent=S[i.dataset.s]});
+ $('#size').value=S.size;$('#seed').value=S.seed;$('#hint').textContent=H[S.lens];
+}
+document.querySelectorAll('.chips').forEach(el=>{
+ const k=el.dataset.k;
+ el.innerHTML=O[k].map(([v,l])=>'<button class="chip" data-v="'+v+'">'+(k==='mode'?'<i class="sw" style="background:'+SW[v]+'"></i>':'')+l+'</button>').join('');
+ el.onclick=e=>{const b=e.target.closest('.chip');if(!b)return;S[k]=b.dataset.v;if(k==='pat')S.pat2=null;if(k==='mode')S.hue=S.light=null;sync();go()};
+});
+document.querySelectorAll('input[data-s]').forEach(i=>{i.oninput=()=>{S[i.dataset.s]=+i.value;i.previousElementSibling.textContent=i.value;go()}});
+$('#size').onchange=e=>{S.size=e.target.value;go()};
+$('#seed').oninput=e=>{S.seed=e.target.value||'a';go()};
+$('#gen').onclick=()=>{S.seed=newSeed();sync();go()};
+const pick=a=>a[Math.random()*a.length|0],r=(a,b)=>a+Math.random()*(b-a)|0;
+$('#sur').onclick=()=>{
+ Object.assign(S,{mode:pick(O.mode)[0],pat:pick(O.pat.slice(0,-1))[0],hue:null,light:null,pat2:null,lens:pick(O.lens.slice(1))[0],sci:r(15,60),blur:r(20,70),vig:r(15,55),grain:r(15,45),word:newSeed(),shift:r(-60,60),psize:r(70,140),bl:r(2,6),seed:newSeed()});
+ sync();go();
+};
+$('#exp').onclick=()=>{
+ const[w,h]=S.size.split('x').map(Number),e=mk(w,h);render(e,w,h);
+ e.toBlob(async b=>{try{const d=window.claude?await claude.use('downloads'):null;if(!d){$('#tmsg').textContent='Saving isn’t available in this view. Open the artifact in claude.ai to save the picture.';return}await d.save({filename:'backdrop-'+S.mode+'-'+S.seed+'.png',data:b})}catch(_){}},'image/png');
+};
+const T=[
+['science lab experiment scientific research hypothesis microscope discovery','dark','molecules','macro','Science','atoms'],
+['chemistry chemical potion reaction','chem','molecules','micro','Chemistry'],
+['biology cell dna genetics medical health medicine hospital doctor body','ice','dna','micro','Biology and medicine'],
+['maori maldi mauri aotearoa koru kowhaiwhai tukutuku poutama marae haka hangi waitangi matariki taonga reo te mihi whakapapa pepeha kapa kapahaka whakairo carving rakau mau tikanga iwi hapu whenua whanau','maori','koru','wide','Māori','poutama'],
+['new zealand nz kiwi pounamu greenstone fern silver','pounamu','koru','macro','New Zealand','leaves'],
+['mold moldy mould fungus mushroom bacteria germ petri microbe spore decay rot yeast','moldy','cells','macro','Moldy','confetti'],
+['math maths algebra geometry calculus equation statistics number numbers arithmetic fractions trigonometry logic puzzle','dark','math','wide','Maths','graph'],
+['technology tech computer coding code ai software cyber digital internet data programming robot binary hacker matrix algorithm app website online cloud laptop phone electronics','neon','binary','wide','Technology','network'],
+['engineering engineer machine gear mechanic factory industrial car building construction','dark','gears','wide','Engineering','circuits'],
+['space galaxy star planet astronomy universe moon rocket nasa cosmos astronaut orbit solar cosmic alien ufo mars','space','stars','portrait','Space'],
+['ocean sea water marine fish beach wave surf swim underwater dolphin whale shark coral river lake','ocean','waves','portrait','Ocean'],
+['nature forest tree plant garden leaf eco environment animal jungle farm green flower bee insect bird wildlife grass soil ecosystem','plants','leaves','macro','Nature'],
+['weather climate rain storm cloud sky','ice','waves','wide','Weather'],
+['winter snow christmas cold arctic frozen','ice','confetti','portrait','Winter'],
+['history ancient vintage museum egypt medieval heritage retro old','sepia','shapes','wide','History'],
+['geography world country earth globe travel','sepia','contours','wide','Geography','compass'],
+['music song band concert guitar piano dance sound jazz orchestra instrument singing choir composition songwriting rock hiphop','royal','notes','portrait','Music','waves'],
+['art paint painting design creative artist drawing sketch sculpture printmaking canvas gallery illustration','sunset','shapes','portrait','Art','confetti'],
+['sport sports football soccer basketball fitness gym race running athletics coaching training exercise cricket netball','fire','shapes','wide','Sport','confetti'],
+['business finance market economy company report corporate professional strategy startup','light','shapes','wide','Business'],
+['school education learn class teacher study student book reading library','pastel','graph','wide','School'],
+['food cook cooking kitchen recipe baking cake fruit pizza restaurant','sunset','confetti','portrait','Food'],
+['cute kids baby fun party birthday candy happy celebration rainbow','pastel','confetti','portrait','Fun'],
+['spooky halloween ghost horror scary witch','fire','stars','portrait','Spooky'],
+['summer sun desert hot tropical holiday sunset','sunset','waves','wide','Summer'],
+['law government politics society community civic social','royal','shapes','wide','Society'],
+['love heart valentine wedding romance rose','sunset','confetti','portrait','Love'],
+['game gaming esports arcade pixel video minecraft','neon','shapes','portrait','Gaming','binary'],
+['adventure pirate pirates treasure ship explorer explore expedition quest','sepia','waves','wide','Adventure','stars'],
+['fantasy magic dragon wizard fairy myth legend castle knight king queen kingdom throne unicorn','royal','stars','portrait','Fantasy','confetti'],
+['volcano lava earthquake rock rocks mineral minerals crystal crystals geology cave caves canyon tectonic magma eruption','fire','shapes','macro','Geology','waves'],
+['dinosaur dinosaurs fossil fossils prehistoric jurassic extinct paleontology trex mammoth','sepia','leaves','macro','Dinosaurs','shapes'],
+['artificial intelligence machine learning neural chatbot gpt deep model','neon','network','portrait','AI','binary'],
+['electricity electric energy power solar wind battery lightning renewable voltage current generator','neon','circuits','wide','Energy','waves'],
+['physics quantum gravity force motion relativity particle particles nuclear magnet magnetic velocity','dark','atoms','wide','Physics','waves'],
+['architecture architect house home city urban bridge skyscraper blueprint plan','ice','graph','wide','Architecture','shapes'],
+['aviation plane planes airplane flight pilot airport aircraft jet helicopter airline wings','ice','waves','portrait','Aviation','shapes'],
+['calm peace peaceful meditation yoga relax mindfulness zen wellbeing wellness sleep','pastel','waves','portrait','Calm','confetti'],
+['coffee cafe tea bakery chocolate dessert sweet sweets donut cookies breakfast','sepia','confetti','portrait','Cafe','waves'],
+['fashion beauty makeup clothes clothing style model dress jewellery shoes','pastel','shapes','portrait','Fashion','confetti'],
+['film movie movies cinema video theatre acting documentary television media journalism news','black','aperture','macro','Film and media','stars'],
+['writing story stories author words grammar','sepia','graph','wide','Writing','notes'],
+['pet pets dog dogs cat cats puppy kitten zoo horse rabbit wildlife animals kittens lion tiger elephant monkey bear wolf fox deer mouse rat hamster parrot zebra giraffe panda koala kangaroo penguin','plants','leaves','portrait','Animals','confetti'],
+['agriculture farming crops harvest orchard dairy sheep cattle vineyard kiwifruit horticulture','plants','leaves','wide','Farming','waves'],
+['mountain mountains hiking tramping camping outdoors trail climb climbing ski skiing snowboard alps','ice','shapes','wide','Mountains','waves'],
+['festival fireworks carnival newyear anniversary concert party disco parade','neon','confetti','portrait','Festival','stars'],
+['mystery detective crime police spy noir secret thriller suspense','black','shapes','macro','Mystery','stars'],
+['cyberpunk futuristic scifi future android hologram dystopia','neon','network','portrait','Sci-fi','binary'],
+['synthwave vaporwave eighties nineties arcade','sunset','waves','portrait','Retro','shapes'],
+['spring flowers flower blossom bloom easter petals','pastel','leaves','portrait','Spring','confetti'],
+['autumn fall thanksgiving pumpkin acorn','sepia','leaves','portrait','Autumn','confetti'],
+['sustainability recycling pollution waste plastic conservation compost','plants','waves','wide','Sustainability','leaves'],
+['nutrition vegetables vitamins diet healthy salad organic vegan','plants','confetti','portrait','Nutrition','leaves'],
+['brain psychology mind memory emotion emotions thinking neuroscience behaviour feelings','chem','network','macro','Brain','dna'],
+['time clock calendar timeline schedule deadline hours','light','gears','wide','Time','graph'],
+['superhero superheroes comic comics hero cartoon anime manga','sunset','shapes','portrait','Comics','confetti'],
+['train trains bus truck vehicle vehicles transport traffic road roads bike bicycle motorbike boat boats ship','dark','gears','wide','Transport','waves'],
+['insect insects bug bugs butterfly butterflies spider spiders ant ants bee bees beetle caterpillar','plants','leaves','macro','Insects','cells'],
+['family friends friend team teamwork people together kindness helping','pastel','shapes','portrait','Friends','confetti'],
+['war wars battle battles army soldier soldiers military conflict ww1 wwi korea trench trenches remembrance veteran veterans weapon weapons invasion navy airforce','war','poppies','wide','War','stars'],
+['treaty colonisation colonial settlers pakeha crown nzwars landwars confiscation','sepia','poutama','wide','Treaty and NZ history','koru'],
+['natural hazard hazards earthquake tsunami flood flooding cyclone drought landslide erosion tectonic disaster','fire','contours','macro','Natural hazards','waves'],
+['climate change warming greenhouse carbon emissions sealevel','sunset','contours','wide','Climate change','waves'],
+['population urbanisation urban migration demographics settlement census','blueprint','shapes','wide','Population and cities','contours'],
+['map maps mapping gis cartography topographic topography contour contours elevation terrain relief hills hill atlas navigation orienteering compass','sepia','contours','wide','Maps','compass'],
+['landscape landscapes landforms rivers glaciers coastal coast tectonics geographical','plants','contours','macro','Landscapes','waves'],
+['tourism tourist tourists destination backpacker visitors','ocean','compass','portrait','Tourism','waves'],
+['economics economy trade supply demand inflation gdp markets scarcity','light','graph','wide','Economics','shapes'],
+['accounting accounts bookkeeping budget budgets tax profit loss ledger invoice balance','light','graph','wide','Accounting','shapes'],
+['enterprise entrepreneur innovation inventing invention pitch prototype','neon','shapes','portrait','Enterprise','gears'],
+['money wealth saving savings investing banking kiwisaver credit debt interest','royal','confetti','wide','Money','graph'],
+['sales customer service retail marketing advertising branding selling shop','sunset','shapes','portrait','Sales and marketing','confetti'],
+['classical classics greece greek rome roman romans gods olympus mythology temple gladiator colosseum','sepia','shapes','wide','Classical studies','stars'],
+['egypt egyptian pharaoh pyramid pyramids mummy hieroglyph nile','sepia','shapes','wide','Ancient Egypt','waves'],
+['law legal justice human humans rights democracy citizenship parliament election civics court','royal','shapes','wide','Law and government','stars'],
+['culture cultures identity diversity traditions customs heritage belief religion','pastel','confetti','portrait','Culture','shapes'],
+['cyber cybersecurity hacking encryption privacy password passwords firewall malware scam phishing','black','binary','wide','Cyber security','network'],
+['database databases sql spreadsheet spreadsheets analytics information','neon','graph','wide','Data and databases','binary'],
+['web website websites webdesign ui ux interface wireframe','sunset','shapes','portrait','Web design','network'],
+['gamedesign unity developer games','neon','shapes','portrait','Game design','binary'],
+['robotics robotic arduino microcontroller sensor sensors automation drone drones mechatronics lego vex','steel','gears','wide','Robotics','circuits'],
+['electronics electronic circuit circuits soldering resistor transistor pcb led voltage multimeter','neon','circuits','macro','Electronics','binary'],
+['dvc visual communication graphics graphic cad sketching perspective rendering orthographic isometric design','blueprint','graph','wide','Design and visual communication','shapes'],
+['product ergonomics packaging prototype industrial','blueprint','shapes','portrait','Product design','gears'],
+['woodwork wood timber carpentry joinery furniture lathe','timber','shapes','macro','Woodwork','leaves'],
+['metalwork metal welding fabrication machining forging metals','steel','gears','macro','Metalwork and welding','circuits'],
+['automotive mechanic mechanics engine engines motor workshop trades trade apprentice apprenticeship','steel','gears','wide','Engineering and automotive','circuits'],
+['construction building builder plumbing electrician roofing','timber','graph','wide','Construction','shapes'],
+['hospitality catering chef barista','sunset','confetti','portrait','Food and hospitality','waves'],
+['hair beauty barber barbering hairdressing salon','pastel','shapes','portrait','Hair and beauty','confetti'],
+['ecology ecosystem ecosystems biodiversity habitat habitats foodchain conservation native','plants','leaves','macro','Ecology','cells'],
+['evolution adaptation darwin species heredity chromosome selection','chem','dna','micro','Genetics and evolution','cells'],
+['marine aquaculture fisheries reef kelp seafood','ocean','cells','macro','Marine science','waves'],
+['agriculture agricultural horticulture crops livestock viticulture beekeeping equine primary','plants','leaves','wide','Primary industries','waves'],
+['forestry forest forests logging plantation sawmill pine','plants','leaves','macro','Forestry','shapes'],
+['statistics stats probability charts sampling survey average mean median','blueprint','graph','wide','Statistics','math'],
+['calculus derivative derivatives integral integrals differentiation limits function functions','dark','math','wide','Calculus','waves'],
+['trigonometry angles triangles pythagoras sine cosine','dark','math','wide','Geometry','shapes'],
+['english literature poetry poem poems novel novels shakespeare text texts reading essay analysis narrative speech speeches','sepia','pages','wide','English','notes'],
+['drama theatre acting actor performance stage play plays script playwright production','black','pages','portrait','Drama','stars'],
+['photography photograph photographer photos camera lens exposure shutter darkroom photoshop','black','aperture','macro','Photography','confetti'],
+['japanese japan tokyo anime sushi samurai kanji hiragana katakana nihongo','sunset','waves','wide','Japanese','confetti'],
+['spanish spain espanol latin mexico fiesta madrid barcelona','sunset','shapes','wide','Spanish','confetti'],
+['esol language languages multilingual translation bilingual communication','pastel','pages','portrait','Languages','confetti'],
+['hauora health wellbeing stress resilience relationships sexuality drugs alcohol safety firstaid','pastel','waves','portrait','Health and hauora','confetti'],
+['outdoor outdoors kayaking surfing abseiling orienteering survival snorkelling','plants','contours','wide','Outdoor education','waves'],
+['anatomy physiology biomechanics muscles bones movement','ice','dna','micro','Anatomy','cells'],
+['rugby allblacks scrum ruck league firstxv','black','shapes','wide','Rugby','confetti'],
+['careers career job jobs work employment cv interview gateway workplace pathway pathways employer','light','shapes','wide','Careers','graph'],
+['leadership leader volunteering mentoring','pastel','shapes','portrait','Leadership','confetti'],
+['ww2 wwii blitz nazi nazis holocaust dday hitler spitfire bomber bombers luftwaffe pearlharbor','steel','searchlights','wide','World War 2','stars'],
+['anzac anzacs gallipoli ataturk lestweforget','sunset','rays','wide','Anzac','poppies'],
+['vietnam vietcong saigon napalm hanoi','plants','contours','portrait','Vietnam War','leaves'],
+['ecotourism ecotourist ecotourists ecotour sustainabletourism wilderness nationalpark nationalparks safari trekking trek glamping ecolodge birdwatching','eco','trail','portrait','Eco-tourism','leaves'],
+['luxury gold fashion elegant premium classy formal','royal','waves','macro','Luxury'],
+['minimal minimalist clean simple plain white','light','none','wide','Minimal'],
+['dark black night','dark','stars','wide','Dark']
+].map(r=>({k:r[0].split(' '),m:r[1],p:r[2],l:r[3],n:r[4],p2:r[5]}));
+const HUE={red:0,orange:25,brown:25,yellow:48,green:135,teal:175,cyan:190,blue:215,navy:225,violet:265,purple:270,magenta:300,pink:330};
+const Q=['Science','Maths','Technology','Moldy','Māori','New Zealand','Space','Ocean','Nature','History','Music','Sport','Food','Fun','Spooky','Business','Black','Animals','Mountains','Film','Retro','AI'];
+let LRN={},lastUnk=[];try{LRN=JSON.parse(localStorage.getItem('bl_learn')||'{}')}catch(_){}
+const grams=w=>{w='<'+w+'>';const s=new Set();for(let i=0;i<w.length-2;i++)s.add(w.slice(i,i+3));return s};
+const dice=(A,B)=>{let n=0;A.forEach(x=>{if(B.has(x))n++});return 2*n/(A.size+B.size)};
+const KG=[];T.forEach((t,i)=>t.k.forEach(k=>KG.push([i,grams(k)])));
+function ai(w){const G=grams(w);let b=[-1,0];for(const[i,g]of KG){const d=dice(G,g);if(d>b[1])b=[i,d]}return b}
+const STOP='the and for with about theme background slide slides project make makes making please some like that this from into an as at be by do if in is it my no of on or so to up we me he us am are was can will you your our works work want need good nice cool best create line lines pattern patterns'.split(' ');
+const stem=w=>w.length>4&&/ies$/.test(w)?w.slice(0,-3)+'y':w.length>4&&/es$/.test(w)?w.slice(0,-2):w.length>3&&/s$/.test(w)&&!/ss$/.test(w)?w.slice(0,-1):w.length>5&&/ing$/.test(w)?w.slice(0,-3):w;
+const LT=['white','light','bright'],DK=['black','dark'];
+function skel(w){return w.replace(/ph/g,'f').replace(/[ckq]/g,'k').replace(/[sz]/g,'s').replace(/(?!^)[aeiouyhw]/g,'').replace(/(.)\1+/g,'$1')}
+function lev(a,b){const d=[];for(let i=0;i<=a.length;i++){d[i]=[i];for(let j=1;j<=b.length;j++)d[i][j]=i?Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1)):j}return d[a.length][b.length]}
+function near(a,b){
+ if(a===b)return 1;if(a.length<4||b.length<4)return 0;
+ if(a.startsWith(b)||b.startsWith(a))return 1;
+ const x=skel(a);if(x.length>=3&&x===skel(b))return 1;
+ return lev(a,b)<=(a.length>=7?2:1)?1:0;
+}
+const md=x=>x.t.n==='Dark'||x.t.n==='Minimal'?1:0;
+const byScore=(a,b)=>b.s-a.s||md(a)-md(b)||a.t.k.length-b.t.k.length||a.i-b.i;
+const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+const hueOf=w=>{for(const x of [w,stem(w)])if(own(HUE,x))return HUE[x];return null};
+function applyTheme(txt){
+ const t0=txt.toLowerCase().replace(/(world\s*war|ww)\s*(2|ii|two)\b|second world war/g,' ww2 ').replace(/(world\s*war|ww)\s*(1|i|one)\b|first world war|great war/g,' ww1 ').replace(/eco[\s-]*(tourism|tourists?|tour)\b/g,' ecotourism '),ws=t0.normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/[^a-z0-9]+/).filter(w=>w.length>1&&!/^\d+$/.test(w)&&!STOP.includes(w));
+ const hit=(t,w)=>[w,stem(w)].some(f=>t.k.some(k=>near(f,k)));
+ const sc=T.map((t,i)=>({t,i,s:ws.reduce((n,w)=>n+((t.k.includes(w)||t.k.includes(stem(w)))?2:hit(t,w)?1:0),0)})).filter(x=>x.s).sort(byScore);
+ let hue=null;ws.forEach(w=>{const h=hueOf(w);if(h!=null)hue=h});
+ const lt=ws.some(w=>LT.includes(w))?true:ws.some(w=>DK.includes(w))?false:null;
+ let unk=ws.filter(w=>!T.some(t=>hit(t,w))&&hueOf(w)==null&&!LT.includes(w)&&!DK.includes(w));
+ const note=[];
+ unk=unk.filter(w=>{
+  let ti=own(LRN,w)?LRN[w]:null,d=1,how='learned';
+  if(ti==null){const r=ai(w);if(r[1]<.55)return true;ti=r[0];d=r[1];how='ai'}
+  const e=sc.find(x=>x.i===ti),add=how==='ai'?1:3;if(e)e.s+=add;else sc.push({t:T[ti],i:ti,s:add});
+  note.push('“'+w+'” as '+T[ti].n+(how==='ai'?' ('+Math.round(d*100)+'% sure)':' (learned)'));
+  return false;
+ });
+ sc.sort(byScore);lastUnk=unk.slice();
+ const sg=unk.length?T.map(t=>({t,d:Math.min(...unk.flatMap(w=>t.k.map(k=>lev(w,k)/Math.max(w.length,k.length))))})).sort((a,b)=>a.d-b.d).filter(x=>x.d<.5).slice(0,3):[];
+ let best=sc[0]&&sc[0].t,sec=sc.find(x=>x.t.p!==(best&&best.p)&&x.s>=sc[0].s&&x.t.n!=='Dark'&&x.t.n!=='Minimal'),msg,fix=false;
+ S.seed=newSeed();S.hue=null;S.light=null;S.pat2=null;S.shift=0;S.word='';S.sci=Math.max(S.sci,30);
+ if(best){
+  S.mode=best.m;S.pat=best.p;S.lens=best.l;S.pat2=sec?sec.t.p:best.p2||null;
+  if(unk.length){S.word=unk.join(' ');S.pat2='invent'}
+  msg='Matched '+best.n+(sec?' + '+sec.t.n:'')+'.';
+    if(unk.length)msg+=' “'+unk.join('”, “')+'” is new to me, so I invented a design for it.';
+  if(note.length)msg+=' My tiny AI read '+note.join(', ')+'.';
+ }else{
+  const h=hash(txt.toLowerCase()),P2=O.pat.slice(0,-2).map(x=>x[0]).filter(x=>x!=='invent'),plain=!unk.length&&(hue!=null||lt!=null);
+  S.mode='random';S.hue=h%360;S.light=(h>>>12)%4===0?true:null;S.lens=['wide','macro','portrait','micro'][(h>>>9)%4];
+  if(plain){S.pat=['waves','shapes','confetti','stars'][(h>>>5)%4];S.pat2=null;S.sci=Math.max(S.sci,30);S.lens='portrait';msg='Made a colour look from “'+txt+'”.'}
+  else{S.word=unk.length?unk.join(' '):txt;S.pat='invent';S.pat2=P2[(h>>>5)%P2.length];S.sci=Math.max(S.sci,45);
+   msg='I haven’t met “'+txt+'” before, so my tiny AI invented a brand-new design just for it. The same word always gives the same style; Generate new makes more.'}
+ }
+ if(hue!=null){S.mode='random';S.hue=hue;S.light=lt;msg+=' Colour set from your colour word.'}
+ else if(lt!=null&&S.mode!=='moldy')S.mode=lt?'light':ws.includes('black')?'black':'dark';
+ if(S.pat2===S.pat)S.pat2=null;
+ $('#tmsg').textContent=msg+' You can still change anything on the right.';
+ $('#dym').innerHTML=unk.length&&sg.length?'<span class="hint" style="align-self:center;margin:0">Did you mean:</span>'+sg.map(x=>'<button type="button" class="chip" data-q="'+x.t.k[0]+'">'+x.t.n+'</button>').join(''):'';
+}
+$('#dym').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;const ti=T.findIndex(t=>t.k[0]===b.dataset.q),w=lastUnk.slice();w.forEach(x=>LRN[x]=ti);try{localStorage.setItem('bl_learn',JSON.stringify(LRN))}catch(_){}$('#theme').value=b.dataset.q;runTheme(b.dataset.q);if(w.length)$('#tmsg').textContent+=' I’ll remember that “'+w.join('”, “')+'” means '+T[ti].n+'.'};
+function runTheme(txt){txt=(txt||'').trim();if(!txt)return;applyTheme(txt);sync();go()}
+$('#mk').onclick=()=>runTheme($('#theme').value);
+$('#theme').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();runTheme($('#theme').value)}};
+$('#quick').innerHTML=Q.map(q=>'<button type="button" class="chip" data-q="'+q+'">'+q+'</button>').join('');
+$('#quick').onclick=e=>{const b=e.target.closest('.chip');if(b){$('#theme').value=b.dataset.q;runTheme(b.dataset.q)}};
+const SUBJ=[
+['Science',['Biology|biology cell','Chemistry','Physics','Genetics|genetics evolution dna','Ecology','Marine science|marine aquaculture reef','Earth science|geology rocks tectonic','Astronomy','Agriculture|agriculture farming livestock','Horticulture|horticulture crops orchard','Forestry','Primary industries|primary agriculture livestock','Energy','Lab experiments|science experiment lab']],
+['Social studies',['Social studies|society citizenship','History','War','World War 1|ww1 war trenches','World War 2|ww2 blitz bombers','Anzac','Vietnam War|vietnam saigon','NZ Wars|nzwars colonisation','Treaty of Waitangi|treaty waitangi','Geography|geography landscapes','Maps|maps mapping','Natural hazards','Climate change','Population|population urbanisation','Tourism','Eco-tourism|ecotourism','Culture|culture identity','Law and government|law government rights','Human rights|human rights justice','Ancient Egypt|egypt pharaoh','Classical studies|classical gods','Ancient Greece|greece classical','Mythology|mythology gods greek','Psychology']],
+['Business & money',['Economics','Accounting','Business studies|business strategy','Enterprise','Money|money saving banking','Sales and marketing|sales marketing','Careers','Gateway|gateway workplace job','Leadership']],
+['Technology',['Digital technology|computer software coding','Coding|coding programming','Cyber security|cyber security hacking','Databases|database data','Web design|web website design','Game design|gamedesign games','AI|artificial intelligence','Robotics','Electronics','Design & visual comm|dvc visual communication graphics','Product design|product ergonomics','Woodwork','Metalwork|metalwork welding','Engineering','Automotive','Construction','Food technology|food cooking','Hospitality','Hair and beauty']],
+['Maths',['Maths|math','Algebra|algebra equation','Calculus','Statistics','Geometry|trigonometry angles','Probability|probability statistics']],
+['English & media',['English','Poetry|poetry poem','Novels|novel literature','Shakespeare','Writing|writing essay','Speeches|speech','Film|film movie','Media studies|media journalism']],
+['Arts',['Art','Painting|painting','Drawing|drawing sketch','Art design|design graphic illustration','Photography','Drama','Music','Māori arts|kapa haka whakairo']],
+['Languages',['Japanese','Spanish','Te reo Māori|reo te mihi','ESOL|esol multilingual','Languages|language languages']],
+['Te Ao Māori',['Māori|maori','Kapa haka|kapahaka haka','Whakairo|whakairo carving','Mau rākau|mau rakau','Matariki','Tikanga|tikanga marae','Aotearoa|new zealand kiwi']],
+['Health & PE',['Health|hauora health wellbeing','Physical education|physical fitness','Outdoor education|outdoor outdoors kayaking surfing','Rugby','Sport','Anatomy','Nutrition','Mental health|hauora stress wellbeing','Coaching|coaching sport','Fitness|fitness gym']]];
+$('#subj').innerHTML='<span class="hint" style="align-self:center;margin:0">School subjects:</span>'+SUBJ.map((x,i)=>'<button type="button" class="chip" data-i="'+i+'" aria-pressed="false">'+x[0]+'</button>').join('');
+$('#subj').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;
+ document.querySelectorAll('#subj .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));
+ $('#topics').innerHTML=SUBJ[+b.dataset.i][1].map(t=>{const p=t.split('|');return '<button type="button" class="chip" data-l="'+p[0]+'" data-q="'+(p[1]||p[0])+'">'+p[0]+'</button>'}).join('')};
+$('#topics').onclick=e=>{const b=e.target.closest('.chip');if(b){runTheme(b.dataset.q);$('#theme').value=b.dataset.l}};
+S.seed=newSeed();sync();draw();
+</script>
+</body>
+</html>
